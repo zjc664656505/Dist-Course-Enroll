@@ -45,20 +45,16 @@ def put_student_in_entry(index):
 
 # button function add student data
 def add_student_data(student_id, student_name, student_course):
-    if any(student_course in data for data in student_data) and any(student_id not in data for data in student_data):
-        student_data.append([student_id, student_name, student_course])
-    elif any(student_course in data for data in student_data) and any(student_id in data for data in student_data):
-        messagebox.showerror("Error", "You have already attempted to enrollin this course!")
+    student_data.append([student_id, student_name, student_course])
+    messagebox.showinfo("Enrollment list", student_course+ " has been added to the enrollment list")
     load_student_data()
 
 
 # button function delete student data
 def delete_student_data(index):
-    try:
-        del student_data[index]
-        load_student_data()
-    except:
-        pass
+    del student_data[index]
+    messagebox.showinfo("Enrollment list", "Selected course has been dropped from the enrollment list")
+    load_student_data()
 
 
 # button function load student data
