@@ -1,4 +1,5 @@
 import tkinter as tk
+from tkinter import messagebox
 from tkinter import *
 import tkinter.ttk as ttk
 
@@ -43,7 +44,10 @@ def put_student_in_entry(index):
 
 # button function add student data
 def add_student_data(student_id, student_name, student_course):
-    student_data.append([student_id, student_name, student_course])
+    if any(student_course in data for data in student_data) and any(student_id not in data for data in student_data):
+        student_data.append([student_id, student_name, student_course])
+    elif any(student_course in data for data in student_data) and any(student_id in data for data in student_data):
+        messagebox.showerror("Error", "You have already attempted to enrollin this course!")
     load_student_data()
 
 
