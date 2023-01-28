@@ -1,1 +1,1 @@
-For running GUI, type >python gui.py
+For running GUI, type `python gui.py`
