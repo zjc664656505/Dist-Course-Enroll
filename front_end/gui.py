@@ -18,8 +18,9 @@ student_data = [
 
 # button function to send request to server
 def send_request():
-    # TODO
-    pass
+    # TODO: send request to server
+    # Incomplete
+    messagebox.showinfo("Success", "Request sent to server!")
 
 # buttom function clear student data
 def clear_student_data():
@@ -120,7 +121,8 @@ clear_btn = tk.Button(head_frame, text="Clear", font=("Bold", 12), bg="blue", fg
 clear_btn.place(x=300, y=150)
 
 # course send request button
-send_request_btn = tk.Button(head_frame, text="Send Request", font=("Bold", 12), bg="blue", fg="yellow")
+send_request_btn = tk.Button(head_frame, text="Send Request", font=("Bold", 12), bg="blue", fg="yellow",
+                             command=lambda: send_request())
 send_request_btn.place(x=120, y=200)
 
 # build record
