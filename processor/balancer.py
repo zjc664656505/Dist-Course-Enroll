@@ -6,8 +6,13 @@ import requests
 from flask import Flask, request, jsonify
 import config
 app = Flask(__name__)
-Assignment = [(0, 3), (3, 6), (6, 10)]
-Alive = 7
+ClassNum = 10
+low3 = int(ClassNum/3)
+high3 = int(ClassNum/3) * 2
+mid = int(ClassNum / 2)
+Assignment = []
+Alive = 0
+
 
 def get_server(classId):
     serverIndex = -1
@@ -27,21 +32,21 @@ def reconfig(serverId=None):
     global Assignment
     global Alive
     if Alive == 7:
-        Assignment = [(0, 3), (3, 6), (6, 10)]
+        Assignment = [(0, low3), (low3, high3), (high3, ClassNum)]
     elif Alive == 6:
-        Assignment = [None, (0, 5), (5, 10)]
+        Assignment = [None, (0, mid), (mid, ClassNum)]
     elif Alive == 5:
-        Assignment = [(0, 5), None, (5, 10)]
+        Assignment = [(0, mid), None, (mid, ClassNum)]
     elif Alive == 4:
-        Assignment = [None, None, (0, 10)]
+        Assignment = [None, None, (0, ClassNum)]
     elif Alive == 3:
-        Assignment = [(0, 5), (5, 10), None]
+        Assignment = [(0, mid), (mid, ClassNum), None]
     elif Alive == 2:
-        Assignment = [None, (0, 10), None]
+        Assignment = [None, (0, ClassNum), None]
     elif Alive == 1:
-        Assignment = [(0, 10), None, None]
+        Assignment = [(0, ClassNum), None, None]
 
-    print("New assignment: " + str(Assignment), flush=True)
+    print("Current assignment: " + str(Assignment), flush=True)
     # send reconfig to servers
     for index, assign in enumerate(Assignment):
         if assign is not None and index != serverId:
@@ -49,6 +54,7 @@ def reconfig(serverId=None):
             url += "/reconfig?first="+str(assign[0])+"&second="+str(assign[1])
             requests.get(url, verify=False)
     print("Reconfiguration finished", flush=True)
+
 
 def operate_record(classId, student, mode):
     global Alive
@@ -84,6 +90,7 @@ def delete_record():
 
     return operate_record(classId, student, "delete")
 
+
 @app.route('/up', methods=['GET'])
 def server_up():
     global Alive
@@ -91,10 +98,11 @@ def server_up():
     bit = 1 << serverId
     if Alive & bit == 0:
         Alive += bit
-        print("server" + str(serverId) + " joined", flush=True)
+        print("server " + str(serverId) + " joined", flush=True)
         reconfig(serverId)
 
     return jsonify(Assignment[serverId])
+
 
 @app.route('/records', methods=['GET'])
 def get_record():
@@ -106,6 +114,7 @@ def get_record():
             records += json.loads(requests.get(url, verify=False).content)
 
     return jsonify(records)
+
 
 # For testing only
 @app.route('/list', methods=['GET'])
@@ -120,5 +129,6 @@ def list_all():
 
     return jsonify(records)
 
+
 if __name__ == '__main__':
-    app.run(host=config.balancer_ip, port=config.balancer_port)
+    app.run(host=config.balancer_ip, port=config.balancer_port, threaded=True)
