@@ -8,7 +8,6 @@ server = None
 
 ######
 # records = {
-#           classId: "0"
 #           max: "20"
 #           students: ["john", "peter"]
 #           }
@@ -21,7 +20,8 @@ class Server:
         self.assignment = json.loads(ass.content)
 
         self.url = "http://" + config.backend_addr
-        url = self.url + "/list?first=" + str(self.assignment[0]) + "&second=" + str(self.assignment[1])
+        url = self.url + "/list?low=" + str(self.assignment[0]) + "&high=" + str(self.assignment[1])
+        
         content = requests.get(url, verify=False).content
         self.records = json.loads(content)
 
@@ -70,7 +70,7 @@ def reconfig():
     first = request.args.get('first')
     second = request.args.get('second')
 
-    url = server.url + "/list?first=" + first + "&second=" + second
+    url = server.url + "/list?low=" + first + "&high=" + second
     server.records = json.loads(requests.get(url, verify=False).content)
 
     return jsonify({'success': 'success'})
@@ -80,9 +80,9 @@ def reconfig():
 def get_record():
     records = []
 
-    for cls in server.records.values():
+    for idx, cls in server.records.items():
         for stu in cls["students"]:
-            records.append([cls["classId"], stu])
+            records.append([idx, stu])
 
     return jsonify(records)
 

@@ -110,12 +110,12 @@ def get_record():
 # For testing only
 @app.route('/list', methods=['GET'])
 def list_all():
-    first = request.args.get('first')
-    second = request.args.get('second')
+    first = request.args.get('low')
+    second = request.args.get('high')
 
     records = {}
     for i in range(int(first), int(second)):
-        cls = {"classId": str(i), "max": random.randint(20, 40), "students": ["john"]}
+        cls = {"max": random.randint(20, 40), "students": ["john"]}
         records[str(i)] = cls
 
     return jsonify(records)
