@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+
+{% block head %}
+    <title>Course Master</title>
+{% endblock %}
+
+{% block body %}
+<div align="center" class="content">
+    <h1 style="text-align: center">Course Manager</h1>
+    <h4 style="text-align: center"> Please login in before enrollment!</h4>
+
+    <form action="/login/{{student.id}}/{{ student.name }}" method="POST">
+        <label>Username:</label>
+        <input type="text" name="name" id="{{student.name}}}">
+         <label>Student ID:</label>
+        <input type="text" name="id" id="{{student.id}}">
+        <input type="submit" value="Confirm">
+    </form>
+</div>
+{% endblock %}

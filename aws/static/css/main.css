@@ -1,0 +1,22 @@
+body {
+    margin: 0;
+    font-family: sans-serif;
+}
+table, th{
+  border: 1px solid black;
+}
+
+
+td {
+    text-align: center;
+    border: 1px solid black;
+    padding: 5px;
+}
+
+.form{
+    margin-top: 10px;
+}
+
+#content{
+    width: 15%;
+}

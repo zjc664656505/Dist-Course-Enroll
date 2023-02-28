@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block head %}
+    <title>Course Master</title>
+{% endblock %}
+
+{% block body %}
+<div align="center" class="content">
+    <h1 style="text-align: center">Course Manager</h1>
+    <h4 style="text-align: center"> Please register your NAME before enrollment!</h4>
+    {% if exist %}
+     <h4 style="display:inline; text-align: center; color: firebrick"> This user id alreadly exists!</h4>
+    {% endif %}
+    <form action="/register/" method="POST">
+        <label>Student Name:</label>
+        <input type="text" name="name" id="{{session["student"]["name"]}}">
+         <label>Student ID:</label>
+        <input type="text" name="id" id="{{session["student"]["id"]}}">
+        <input type="submit" value="Confirm">
+    </form>
+</div>
+{% endblock %}

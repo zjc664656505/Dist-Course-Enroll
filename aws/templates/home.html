@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block head %}
+    <title>Course Master</title>
+{% endblock %}
+
+{% block body %}
+<div align="center" class="content">
+    <h1 style="text-align: center">Course Manager</h1>
+    <h4 style="display:inline; text-align: center"> Hello </h4>
+    <h3 style="display:inline; text-align: center; color: firebrick">{{ student.name}}</h3>
+    <h3 style="display:inline; text-align: center; color: firebrick"> ({{ student.id}})!</h3>
+    <h4 style="display:inline; text-align: center"> Welcome to enrollment system.</h4>
+    {% if courses|length < 1  %}
+    <h4 style="text-align: center"> There is no course you enrolled! Choose one below!</h4>
+    {% else %}
+    <br/>
+    <table>
+        <tr>
+            <th>Course Code</th>
+            <th>Course ID</th>
+            <th>Course Name</th>
+	    <th>Instructor</th>
+	    <th>Action</th>
+        </tr>
+        {% for course in courses %}
+        <tr>
+	    <td>{{ course['CourseCode'] }}</td>
+            <td>{{ course['CourseID']}}</td>
+            <td>{{ course['CourseName'] }}</td>
+            <td>{{ course['Instructor']}}</td>
+            <td>
+                <a href="/delete/{{course['CourseCode']}}">Delete</a>
+                <br>
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+    {% endif %}
+    <br>
+    <form action="/home" method="POST">
+        <label>Course Name:</label>
+        <input type="text" name="content" id="content">
+        <input type="submit" value="Add Course">
+    </form>
+</div>
+{% endblock %}
