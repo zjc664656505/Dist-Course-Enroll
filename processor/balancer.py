@@ -6,13 +6,15 @@ import requests
 from flask import Flask, request, jsonify
 import config
 app = Flask(__name__)
-ClassNum = 10
+ClassNum = 1000
+
 low3 = int(ClassNum/3)
 high3 = int(ClassNum/3) * 2
 mid = int(ClassNum / 2)
 Assignment = []
 Alive = 0
 
+students = {}
 
 def get_server(classId):
     serverIndex = -1
@@ -46,6 +48,14 @@ def reconfig(serverId=None):
     elif Alive == 1:
         Assignment = [(0, ClassNum), None, None]
 
+    tmp = []
+    for ass in Assignment:
+        if ass is None:
+            tmp.append(None)
+        else:
+            tmp.append((ass[0] + config.class_offset, ass[1] + config.class_offset))
+
+    Assignment = tmp
     print("Current assignment: " + str(Assignment), flush=True)
     # send reconfig to servers
     for index, assign in enumerate(Assignment):
@@ -56,13 +66,17 @@ def reconfig(serverId=None):
     print("Reconfiguration finished", flush=True)
 
 
-def operate_record(classId, student, mode):
+def operate_record(classId, studentId, studentName, mode):
     global Alive
+
+    if students[studentId] != studentName :
+        return jsonify({'error': 'studentId not match or not registered'})
+
     serverId, url = get_server(classId)
     if serverId == -1:
         return jsonify({'error': 'wrong classId'})
 
-    url += "/" + mode + "?classId=" + str(classId) + "&student=" + student
+    url += "/" + mode + "?classId=" + str(classId) + "&studentId=" + studentId + "&studentName=" + studentName
 
     try:
         return requests.get(url, verify=False, timeout=2).content
@@ -71,24 +85,26 @@ def operate_record(classId, student, mode):
         Alive -= 1 << serverId
         reconfig()
         serverId, url = get_server(classId)
-        url += "/" + mode + "?classId=" + str(classId) + "&student=" + student
+        url += "/" + mode + "?classId=" + str(classId) + "&studentId=" + studentId + "&studentName=" + studentName
         return requests.get(url, verify=False).content
 
 
 @app.route('/insert', methods=['GET'])
 def insert_record():
     classId = int(request.args.get('classId'))
-    student = request.args.get('student')
+    studentId = request.args.get('studentId')
+    studentName = request.args.get('studentName')
 
-    return operate_record(classId, student, "insert")
+    return operate_record(classId, studentId, studentName, "insert")
 
 
 @app.route('/delete', methods=['GET'])
 def delete_record():
     classId = int(request.args.get('classId'))
-    student = request.args.get('student')
+    student = request.args.get('studentId')
+    studentName = request.args.get('studentName')
 
-    return operate_record(classId, student, "delete")
+    return operate_record(classId, student, studentName, "delete")
 
 
 @app.route('/up', methods=['GET'])
@@ -116,6 +132,33 @@ def get_record():
     return jsonify(records)
 
 
+@app.route('/register', methods=['GET'])
+def register():
+    global students
+
+    student = request.args.get('studentId')
+    studentName = request.args.get('studentName')
+
+    if student in students:
+        return jsonify({'error': 'student already registered'})
+
+    requests.get("http://" + config.backend_addr + "/api/signin/" + student + "/" + studentName)
+    students[student] = studentName
+
+    return jsonify({'success': 'success'})
+
+@app.route('/login', methods=['GET'])
+def login():
+    global students
+
+    student = request.args.get('studentId')
+    studentName = request.args.get('studentName')
+
+    if student in students and students[student] == studentName:
+        return jsonify({'success': 'success'})
+
+    return jsonify({'error': 'wrong student'})
+
 # For testing only
 @app.route('/list', methods=['GET'])
 def list_all():
@@ -131,4 +174,6 @@ def list_all():
 
 
 if __name__ == '__main__':
+    students = json.loads(requests.get("http://" + config.backend_addr + "/api/student").content)
+    print(students)
     app.run(host=config.balancer_ip, port=config.balancer_port, threaded=True)

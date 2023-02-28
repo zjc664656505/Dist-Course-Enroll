@@ -10,8 +10,10 @@ server = None
 
 ######
 # records = {
-#           max: "20"
-#           students: ["john", "peter"]
+#           Max: "20"
+#           students: [
+#            {"name" : "john", "id" : "123"}
+#            ]
 #           }
 #####
 
@@ -21,58 +23,80 @@ class Server:
         ass = requests.get("http://" + config.balancer_ip + ":" + config.balancer_port + "/up?serverId=" + str(serverId))
         assignment = json.loads(ass.content)
 
-        self.url = "http://" + config.backend_addr
+        self.url = "http://" + config.backend_addr + "/api"
         self.records = None
         self.locks = {}
         self.reconfig(str(assignment[0]), str(assignment[1]))
 
     def reconfig(self, low, high):
-        url = self.url + "/list?low=" + low + "&high=" + high
+        url = self.url + "/info"
 
         content = requests.get(url, verify=False).content
-        self.records = json.loads(content)
+        records = json.loads(content)
 
-        for k in self.records:
-            self.locks[k] = Lock()
+        l = int(low)
+        h = int(high)
 
+        print(l)
+        print(h)
 
-def insert_thread(classId, student):
+        self.records = {}
+        self.locks = {}
+        for k in records.keys():
+            id = int(k)
+
+            if l <= id < h:
+                students = [stu["name"] for stu in records[k]["student"]]
+                ids = [stu["id"] for stu in records[k]["student"]]
+
+                self.records[k] = {
+                    "student": students,
+                    "id": ids,
+                    "Max": records[k]["Max"]
+                }
+                self.locks[k] = Lock()
+        print(self.records)
+
+def insert_thread(classId, studentId, studentName):
     with server.locks[classId]:
-        if server.records[classId]["students"].count(student) != 0:
+        if server.records[classId]["id"].count(studentId) != 0:
             return
-        server.records[classId]["students"].append(student)
-        url = server.url + "/insert?classId=" + classId + "&student=" + student
+        server.records[classId]["id"].append(studentId)
+        server.records[classId]["student"].append(studentName)
+        url = server.url + "/add/" + studentId + "/" + classId
         # send to backend
-        # requests.get(url, verify=False)
+        requests.get(url, verify=False)
 
 
 @app.route('/insert', methods=['GET'])
 def insert_record():
     classId = request.args.get('classId')
-    student = request.args.get('student')
+    studentId = request.args.get('studentId')
+    student = request.args.get('studentName')
 
-    current = len(server.records[classId]["students"])
-    if current < config.quick_response_ratio * server.records[classId]["max"]:
+    current = len(server.records[classId]["id"])
+    if current < config.quick_response_ratio * server.records[classId]["Max"]\
+            and server.records[classId]["id"].count(studentId) == 0:
         print("quick response", flush=True)
         # start thread for actual insertion
-        threading.Thread(target=insert_thread, args=(classId, student)).start()
+        threading.Thread(target=insert_thread, args=(classId, studentId, student)).start()
 
         # quick response with success
         return jsonify({'success': 'success'})
+
     print("slow response", flush=True)
     with server.locks[classId]:
         cls = server.records[classId]
-        if len(cls["students"]) >= int(cls["max"]):
+        if len(cls["student"]) >= int(cls["Max"]):
             return jsonify({'error': 'class is full'})
 
-        if cls["students"].count(student) != 0:
-            return jsonify({'error': 'already enrolled'})
-
-        server.records[classId]["students"].append(student)
-        url = server.url + "/insert?classId=" + classId + "&student=" + student
-
+        if cls["id"].count(studentId) != 0:
+            return
+        server.records[classId]["id"].append(studentId)
+        server.records[classId]["student"].append(student)
+        url = server.url + "/add/" + studentId + "/" + classId
         # send to backend
-        # requests.get(url, verify=False)
+        requests.get(url, verify=False)
 
         return jsonify({'success': 'success'})
 
@@ -80,18 +104,20 @@ def insert_record():
 @app.route('/delete', methods=['GET'])
 def delete_record():
     classId = request.args.get('classId')
-    student = request.args.get('student')
+    studentId = request.args.get('studentId')
+    student = request.args.get('studentName')
 
     with server.locks[classId]:
         cls = server.records[classId]
-        if cls["students"].count(student) == 0:
+        if cls["id"].count(studentId) == 0:
             return jsonify({'error': 'did not enroll this class'})
 
-        server.records[classId]["students"].remove(student)
-        url = server.url + "/delete?classId=" + classId + "&student=" + student
+        server.records[classId]["student"].remove(student)
+        server.records[classId]["id"].remove(studentId)
+        url = server.url + "/delete/" + studentId + "/" + classId
 
         # send to backend
-        # requests.get(url, verify=False)
+        requests.get(url, verify=False)
 
         return jsonify({'success': 'success'})
 
@@ -110,9 +136,9 @@ def reconfig():
 def get_record():
     records = []
 
-    for idx, cls in server.records.items():
-        for stu in cls["students"]:
-            records.append([idx, stu])
+    for k, cls in server.records.items():
+        for idx, name in enumerate(cls["student"]):
+            records.append([cls["id"][idx], name, k])
 
     return jsonify(records)
 
