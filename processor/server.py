@@ -94,7 +94,7 @@ def insert_record():
             return jsonify({'error': 'already registered'})
         server.records[classId]["id"].append(studentId)
         server.records[classId]["student"].append(student)
-        url = server.url + "/add/" + studentId + "/" + classId
+        url = server.url + "/add/" + str(studentId) + "/" + classId
         # send to backend
         requests.get(url, verify=False)
 
