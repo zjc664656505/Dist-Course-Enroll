@@ -60,10 +60,10 @@ class Server:
 def insert_thread(classId, studentId, studentName):
     with server.locks[classId]:
         if server.records[classId]["id"].count(studentId) != 0:
-            return
+            return jsonify({'error': 'already registered'})
         server.records[classId]["id"].append(studentId)
         server.records[classId]["student"].append(studentName)
-        url = server.url + "/add/" + studentId + "/" + classId
+        url = server.url + "/add/" + str(studentId) + "/" + classId
         # send to backend
         requests.get(url, verify=False)
 
@@ -71,7 +71,7 @@ def insert_thread(classId, studentId, studentName):
 @app.route('/insert', methods=['GET'])
 def insert_record():
     classId = request.args.get('classId')
-    studentId = request.args.get('studentId')
+    studentId = int(request.args.get('studentId'))
     student = request.args.get('studentName')
 
     current = len(server.records[classId]["id"])
@@ -89,9 +89,9 @@ def insert_record():
         cls = server.records[classId]
         if len(cls["student"]) >= int(cls["Max"]):
             return jsonify({'error': 'class is full'})
-
+        print(cls["id"].count(studentId))
         if cls["id"].count(studentId) != 0:
-            return
+            return jsonify({'error': 'already registered'})
         server.records[classId]["id"].append(studentId)
         server.records[classId]["student"].append(student)
         url = server.url + "/add/" + studentId + "/" + classId
@@ -104,7 +104,7 @@ def insert_record():
 @app.route('/delete', methods=['GET'])
 def delete_record():
     classId = request.args.get('classId')
-    studentId = request.args.get('studentId')
+    studentId = int(request.args.get('studentId'))
     student = request.args.get('studentName')
 
     with server.locks[classId]:
@@ -114,7 +114,7 @@ def delete_record():
 
         server.records[classId]["student"].remove(student)
         server.records[classId]["id"].remove(studentId)
-        url = server.url + "/delete/" + studentId + "/" + classId
+        url = server.url + "/delete/" + str(studentId) + "/" + classId
 
         # send to backend
         requests.get(url, verify=False)

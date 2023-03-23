@@ -191,20 +191,26 @@ def enrollment_window():
     # button function add student data
     def add_student_data(student_id, student_name, student_course):
         # send add request to remote server
-        requests.get(f"http://127.0.0.1:3000/insert?classId={student_course}&studentName={student_name}&studentId={student_id}")
-        student_data.append([student_id, student_name, student_course])
-        messagebox.showinfo("Enrollment list", student_course+ " has been added to the enrollment list")
-        load_student_data()
+        student_add_bool = json.loads(requests.get(f"http://127.0.0.1:3000/insert?classId={student_course}&studentName={student_name}&studentId={student_id}").content)
+        if "success" in student_add_bool:
+            student_data.append([student_id, student_name, student_course])
+            messagebox.showinfo("Enrollment list", student_course+ " has been added to the enrollment list")
+            load_student_data()
+        else:
+            messagebox.showinfo("Error", student_add_bool["error"])
 
 
     # button function delete student data
     def delete_student_data(index):
         student_info = student_data[index]
         s_id, s_name, c_id = student_info[0], student_info[1], student_info[2]
-        requests.get(f"http://127.0.0.1:3000/delete?classId={c_id}&studentName={s_name}&studentId={s_id}")
-        del student_data[index]
-        messagebox.showinfo("Enrollment list", "Selected course has been dropped from the enrollment list")
-        load_student_data()
+        student_del_bool = json.loads(requests.get(f"http://127.0.0.1:3000/delete?classId={c_id}&studentName={s_name}&studentId={s_id}").content)
+        if "success" in student_del_bool:
+            del student_data[index]
+            messagebox.showinfo("Enrollment list", "Selected course has been dropped from the enrollment list")
+            load_student_data()
+        else:
+            messagebox.showinfo("Error", student_del_bool["error"])
 
 
     # button function load student data
